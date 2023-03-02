@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    tools:ignore="ExtraText"
+    android:background="@color/background">
+
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:id="@+id/myProgress"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/sort_container"
+        android:orientation="horizontal"
+        android:layout_marginBottom="0dp">
+
+        <Spinner
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp">
+
+        </Spinner>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/grid_view"
+            android:padding="16dp"
+            android:backgroundTint="@color/grid_color"
+            android:layout_gravity="center_vertical"
+            android:layout_margin="0dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="По умолчанию"
+                android:layout_gravity="end"
+                android:layout_marginEnd="16dp"
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                app:backgroundTint="@color/grid_color"
+                android:textColor="#8236FD"
+                app:icon="@drawable/vector_2_"
+                app:iconGravity="textEnd"
+                app:iconTint="#8236FD"
+                />
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/friendsList"
+        android:paddingBottom="60dp"
+        android:clipToPadding="false"
+        android:layout_below="@id/sort_container"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="6dp"/>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/addButton"
+        android:text="@string/add_a_friend"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:backgroundTint="@color/accent"
+        android:textColor="@color/text"
+        android:gravity="center"/>
+
+</RelativeLayout>

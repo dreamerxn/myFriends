@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "585655294837",
+    "firebase_url": "https://my-friends-91830-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "my-friends-91830",
+    "storage_bucket": "my-friends-91830.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585655294837:android:3c98e37761d2d3568b113c",
+        "android_client_info": {
+          "package_name": "com.dreamclub.myfriends"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "585655294837-6atr1nhodnhak8e6thb78isa1270dbq3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dreamclub.myfriends",
+            "certificate_hash": "98a2ead72dc6a37c7ee23705a5c80801f3f7150d"
+          }
+        },
+        {
+          "client_id": "585655294837-3hs56oa3fhgrvs3fa3iqo0pmithi8tr2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCctraXP8TcFjRZnA_9R8nMzsP91c6_QQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "585655294837-3hs56oa3fhgrvs3fa3iqo0pmithi8tr2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

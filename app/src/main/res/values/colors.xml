@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#17161b</color>
+    <color name="background">#FFF</color>
+    <color name="secondary">#FFF</color>
+    <color name="text">#000</color>
+    <color name="accent">#9092da</color>
+
+    <color name="gradient_start">#806CBDFF</color>
+    <color name="gradeint_end">#806CBDFF</color>
+
+    <color name="grid_color">#80BFBEE3</color>
+
+    <color name="counter_text">#0057ff</color>
+    <color name="counter_color">#0057ff</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary">#8236fd</color>
+    <color name="tg_accent">#0057ff</color>
+    <color name="call_accent">#00bd9d</color>
+    <color name="card_accent">#f77a36</color>
+</resources>

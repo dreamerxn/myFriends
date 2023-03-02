@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">RemindLink</string>
+    <string name="person_image">Picture of person</string>
+    <string name="tg_button">TG</string>
+    <string name="ig_button">IG</string>
+    <string name="call_button">Call</string>
+    <string name="card_button">Card</string>
+    <string name="add_a_friend">Add</string>
+    <string name="choose_photo">Choose a photo</string>
+    <string name="name">Name</string>
+    <string name="tg_input">TG username</string>
+    <string name="ig_input">IG username</string>
+    <string name="call_input">Phone number</string>
+    <string name="card_input">Card number</string>
+    <string name="pick_a_date">Pick a date of birth</string>
+
+    <string name="card_error">Enter a valid card number</string>
+    <string name="name_error">Name can\'t be empty</string>
+    <string name="upload">Uploading…</string>
+    <string name="bday_error">Pick a date of birth!</string>
+    <string name="photo_error">Choose a photo!</string>
+    <string name="add">Add</string>
+</resources>
