@@ -15,11 +15,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "585655294837-6atr1nhodnhak8e6thb78isa1270dbq3.apps.googleusercontent.com",
+          "client_id": "585655294837-tau03dr62u908u9qbmcau1vo0g07ked3.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.dreamclub.myfriends",
-            "certificate_hash": "98a2ead72dc6a37c7ee23705a5c80801f3f7150d"
+            "certificate_hash": "3f1f29c5f706bbb8c7a6d097b037060385968dab"
           }
         },
         {

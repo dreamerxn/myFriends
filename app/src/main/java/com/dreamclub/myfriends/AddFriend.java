@@ -16,7 +16,10 @@ import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -25,6 +28,10 @@ import android.widget.Toast;
 
 import com.dreamclub.myfriends.Crypt.EncryptionUtils;
 import com.dreamclub.myfriends.Data.DataModel;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -40,6 +47,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.security.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.ThreadLocalRandom;
@@ -51,6 +59,7 @@ public class AddFriend extends AppCompatActivity {
 
     Uri imageUri;
     TextInputEditText name, tgurl, igurl, callnumb, cardnumb;
+    CheckBox hasTg, hasIg, hasCall, hasCard;
     String strName, strTgUrl, strIgUrl, strCallNumb, strCardNumb, strBirthDate;
     ExtendedFloatingActionButton addButton;
 
@@ -58,12 +67,16 @@ public class AddFriend extends AppCompatActivity {
     FirebaseAuth firebaseAuth;
     FirebaseUser currentUser;
     DatabaseReference dbRef;
-    String acID;
+    String acID, acId;
     MaterialButton birthDate;
     ImageButton choosePhoto;
 
-    int mYear, mMonth, mDay;
+    int mYear, mMonth, mDay, dayOfYear;
     String UID;
+
+    GoogleSignInOptions gso;
+    GoogleSignInClient gsc;
+    Calendar dayOfYearCalendar;
 
     EncryptionUtils encrypt;
     TextInputLayout name_layout, tg_layout, ig_layout, call_layout, card_layout;
@@ -76,26 +89,23 @@ public class AddFriend extends AppCompatActivity {
 
         database = FirebaseDatabase.getInstance("https://my-friends-91830-default-rtdb.europe-west1.firebasedatabase.app/");
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        currentUser = firebaseAuth.getCurrentUser();
-        assert currentUser != null;
-        String mail = currentUser.getEmail();
-        UID = currentUser.getUid();
-        assert mail != null;
-        int pos = mail.indexOf('@');
-        mail = mail.substring(0, pos);
-        acID = delNoDigOrLet(mail);
-        dbRef = database.getReference("DATA/"+acID);
+        getAccount();
+
+        dbRef = database.getReference("DATA/"+acId);
         dbRef.keepSynced(true);
 
         encrypt = new EncryptionUtils();
 
         viewFind();
+        checkBoxes();
         choosePhoto.setOnClickListener(v->pickImage());
 
         addButton.setOnClickListener(v->{
             if (imageUri!=null){
-                uploadImage(imageUri);
+                upload(imageUri);
+            }
+            else if (imageUri==null){
+                upload();
             }
             else Toast.makeText(this, "Choose a photo first", Toast.LENGTH_SHORT).show();
             
@@ -106,10 +116,17 @@ public class AddFriend extends AppCompatActivity {
             int month = calendar.get(Calendar.MONTH);
             int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
 
+
             @SuppressLint("SetTextI18n") DatePickerDialog.OnDateSetListener dateSetListener = (view, year1, month1, dayOfMonth1) -> {
                 mYear = year1;
-                mMonth = month1;
+                mMonth = month1+1;
                 mDay = dayOfMonth1;
+
+                dayOfYearCalendar = Calendar.getInstance();
+                dayOfYearCalendar.set(Calendar.YEAR, mYear);
+                dayOfYearCalendar.set(Calendar.MONTH, mMonth-1);
+                dayOfYearCalendar.set(Calendar.DAY_OF_MONTH, mDay);
+                dayOfYear = dayOfYearCalendar.get(Calendar.DAY_OF_YEAR);
                 birthDate.setText(mYear+"-"+mMonth+"-"+mDay);
             };
             DatePickerDialog datePickerDialog = new DatePickerDialog(this, dateSetListener, year, month, dayOfMonth);
@@ -130,6 +147,18 @@ public class AddFriend extends AppCompatActivity {
         card_layout = findViewById(R.id.card_layout);
 
         choosePhoto = findViewById(R.id.choosedPhoto);
+
+        tg_layout = findViewById(R.id.tg_layout);
+        ig_layout = findViewById(R.id.ig_layout);
+        call_layout = findViewById(R.id.call_layout);
+        card_layout = findViewById(R.id.card_layout);
+
+        hasTg = findViewById(R.id.hasTg);
+        hasIg = findViewById(R.id.hasIg);
+        hasCall = findViewById(R.id.hasCall);
+        hasCard = findViewById(R.id.hasCard);
+
+
 
         checkForWhiteSpaces(tgurl);
         checkForWhiteSpaces(igurl);
@@ -156,6 +185,59 @@ public class AddFriend extends AppCompatActivity {
         });
 
     }
+
+    public void checkBoxes(){
+        hasTg.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    tg_layout.setVisibility(View.VISIBLE);
+                    // действия, которые нужно выполнить, если флажок установлен
+                } else {
+                    tg_layout.setVisibility(View.GONE);
+                    // действия, которые нужно выполнить, если флажок снят
+                }
+            }
+        });
+        hasIg.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    ig_layout.setVisibility(View.VISIBLE);
+                    // действия, которые нужно выполнить, если флажок установлен
+                } else {
+                    ig_layout.setVisibility(View.GONE);
+                    // действия, которые нужно выполнить, если флажок снят
+                }
+            }
+        });
+        hasCall.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    call_layout.setVisibility(View.VISIBLE);
+                    // действия, которые нужно выполнить, если флажок установлен
+                } else {
+                    call_layout.setVisibility(View.GONE);
+                    // действия, которые нужно выполнить, если флажок снят
+                }
+            }
+        });;
+        hasCard.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    card_layout.setVisibility(View.VISIBLE);
+                    // действия, которые нужно выполнить, если флажок установлен
+                } else {
+                    card_layout.setVisibility(View.GONE);
+                    // действия, которые нужно выполнить, если флажок снят
+                }
+            }
+        });;
+    }
+
+
     public void pickImage() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, PICK_PHOTO_FOR_AVATAR);
@@ -172,14 +254,13 @@ public class AddFriend extends AppCompatActivity {
         }
     }
 
-    public void uploadImage(Uri uri){
+    public void upload(Uri uri){
 
         strName = name.getText().toString();
         strTgUrl = tgurl.getText().toString();
         strIgUrl = igurl.getText().toString();
         strCallNumb = callnumb.getText().toString();
         strCardNumb = cardnumb.getText().toString();
-        mMonth++;
 
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
         if (!strName.isEmpty()){
@@ -198,7 +279,7 @@ public class AddFriend extends AppCompatActivity {
                 }
                 strBirthDate = mYear+"-"+strMonth+"-"+strDay;
 
-                StorageReference storageReference = firebaseStorage.getReference(acID+"/"+strName+".jpg");
+                StorageReference storageReference = firebaseStorage.getReference(acId+"/"+strName+".jpg");
 
                 UploadTask uploadTask = storageReference.putFile(uri);
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -226,7 +307,10 @@ public class AddFriend extends AppCompatActivity {
                                     throw new RuntimeException(e);
                                 }
 
-                                pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth);
+                                String date = mMonth+"-"+mDay;
+                                pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, date);
+                                dayOfYearCalendar = null;
+                                dayOfYear = 0;
                                 finish();
                             }
                         });
@@ -243,12 +327,68 @@ public class AddFriend extends AppCompatActivity {
 
 
     }
-    public void pushData(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate){
 
+    public void upload(){
+
+        strName = name.getText().toString();
+        strTgUrl = tgurl.getText().toString();
+        strIgUrl = igurl.getText().toString();
+        strCallNumb = callnumb.getText().toString();
+        strCardNumb = cardnumb.getText().toString();
+        strCardNumb = cardnumb.getText().toString();
+
+        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+        if (!strName.isEmpty()){
+            if (mYear==0 || mMonth==0 || mDay==0){
+                Toast.makeText(this, getString(R.string.bday_error), Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Toast.makeText(this, getString(R.string.upload), Toast.LENGTH_LONG).show();
+                String strMonth = Integer.toString(mMonth);
+                if (mMonth<10){
+                    strMonth = "0"+mMonth;
+                }
+                String strDay = Integer.toString(mDay);
+                if (mDay<10){
+                    strDay = "0"+mDay;
+                }
+                strBirthDate = mYear+"-"+strMonth+"-"+strDay;
+
+                String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
+                try {
+                    encPhoto = "";
+                    encName = EncryptionUtils.encrypt(strName, UID);
+                    encTg = EncryptionUtils.encrypt(strTgUrl, UID);
+                    encIg = EncryptionUtils.encrypt(strIgUrl, UID);
+                    encCall = EncryptionUtils.encrypt(strCallNumb, UID);
+                    encCard = EncryptionUtils.encrypt(strCardNumb, UID);
+                    encBirth = EncryptionUtils.encrypt(strBirthDate, UID);
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                String date = mMonth+"-"+mDay;
+                pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, date);
+                dayOfYearCalendar = null;
+                dayOfYear = 0;
+                finish();
+            }
+        }
+        else {
+            Toast.makeText(this, getString(R.string.name_error), Toast.LENGTH_SHORT).show();
+        }
+
+
+
+    }
+    public void pushData(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate, String date){
+
+        Long timeLong = System.currentTimeMillis()/1000;
 
         int UID = ThreadLocalRandom.current().nextInt(0, 100000000);
 
-        DataModel data = new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNUMB, birthDate);
+        DataModel data = new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNUMB, birthDate, date);
         dbRef.push().setValue(data);
 
     }
@@ -283,5 +423,28 @@ public class AddFriend extends AppCompatActivity {
 
 // Устанавливаем фильтр ввода в EditText
         editText.setFilters(new InputFilter[] {noSpaceFilter});
+    }
+
+
+    private void getAccount(){
+        firebaseAuth = FirebaseAuth.getInstance();
+        currentUser = firebaseAuth.getCurrentUser();
+        assert currentUser != null;
+        String mail = currentUser.getEmail();
+        UID = currentUser.getUid();
+        assert mail != null;
+        int pos = mail.indexOf('@');
+        mail = mail.substring(0, pos);
+        acID = delNoDigOrLet(mail);
+
+
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        gsc = GoogleSignIn.getClient(this, gso);
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if(account !=null){
+            acId = account.getId();
+        }
     }
 }

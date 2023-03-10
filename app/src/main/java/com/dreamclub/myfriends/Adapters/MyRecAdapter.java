@@ -8,6 +8,8 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.net.Uri;
@@ -122,20 +124,20 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         String cl = mDataModel.get(position).getCallNumb();
         String cr = mDataModel.get(position).getCardNumb();
         String bd = mDataModel.get(position).getBirthDate();
-        String decPhoto = "", decName = "", decTgUrl = "", decIgUrl = "", decCallNumb = "", decCardNumb = "", decBirth = "";
-        try {
-            if (ph.length()>0) decPhoto = EncryptionUtils.decrypt(ph, UID);
-
-            if (nm.length()>0) decName = EncryptionUtils.decrypt(nm, UID);
-            if (tg.length()>0) decTgUrl = EncryptionUtils.decrypt(tg, UID);
-            if (ig.length()>0) decIgUrl = EncryptionUtils.decrypt(ig, UID);
-            if (cl.length()>0) decCallNumb = EncryptionUtils.decrypt(cl, UID);
-            if (cr.length()>0) decCardNumb = EncryptionUtils.decrypt(cr, UID);
-            if (bd.length()>0) decBirth = EncryptionUtils.decrypt(bd, UID);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        String decPhoto = ph, decName = nm, decTgUrl = tg, decIgUrl = ig, decCallNumb = cl, decCardNumb = cr, decBirth = bd;
+//        try {
+//            if (ph.length()>0) decPhoto = EncryptionUtils.decrypt(ph, UID);
+//
+//            if (nm.length()>0) decName = EncryptionUtils.decrypt(nm, UID);
+//            if (tg.length()>0) decTgUrl = EncryptionUtils.decrypt(tg, UID);
+//            if (ig.length()>0) decIgUrl = EncryptionUtils.decrypt(ig, UID);
+//            if (cl.length()>0) decCallNumb = EncryptionUtils.decrypt(cl, UID);
+//            if (cr.length()>0) decCardNumb = EncryptionUtils.decrypt(cr, UID);
+//            if (bd.length()>0) decBirth = EncryptionUtils.decrypt(bd, UID);
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
 
         String birthDate = decBirth;
         String photoURL = decPhoto;
@@ -145,13 +147,19 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         String callNumb = decCallNumb;
         String cardNumb = decCardNumb;
 
-        Glide.with(mContext)
-                .load(photoURL)
-                .diskCacheStrategy(DiskCacheStrategy.DATA)
-                .into(holder.photoView);
+
 
 
         holder.name.setText(name);
+        if (photoURL.length()>0){
+            Glide.with(mContext)
+                    .load(photoURL)
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .into(holder.photoView);
+        }else {
+            holder.photoView.setVisibility(View.GONE);
+        }
+
         if (tgUrl.length()>0){
             holder.tgButton.setVisibility(View.VISIBLE);
             holder.tgButton.setOnClickListener(v->{
@@ -282,7 +290,16 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         countDownTimer = new CountDownTimer(millisLeft, 1000) {
             public void onTick(long millisUntilFinished) {
                 // обновляем счётчик на экране
-                textView.setText(getCountdownText(millisUntilFinished));
+                long days = millisUntilFinished/86400000;
+                if (days>=365){
+                    textView.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
+                    textView.setTextColor(Color.RED);
+                    textView.setText("Happy Birthday!");
+                }
+                else {
+                    textView.setText(getCountdownText(millisUntilFinished));
+                }
+
 
 
             }
@@ -291,10 +308,6 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
                 // действия, которые нужно выполнить после окончания обратного отсчёта
             }
         };
-
-        DataModel dataModel = mDataModel.get(pos);
-        dataModel.setCountDownTimer(countDownTimer);
-        // запускаем обратный отсчёт
         countDownTimer.start();
     }
 

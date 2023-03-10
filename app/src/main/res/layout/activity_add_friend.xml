@@ -7,6 +7,7 @@
     tools:context=".AddFriend"
     android:padding="8dp"
     android:background="@color/background"
+    android:animateLayoutChanges="true"
     >
 
     <ScrollView
@@ -63,7 +64,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Дополнительные данные"
+                android:text=""
                 android:textSize="16sp"
                 android:textColor="@color/text"/>
             <LinearLayout
@@ -75,25 +76,29 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/tg_button"
-                    android:layout_margin="6dp"/>
+                    android:layout_margin="6dp"
+                    android:id="@+id/hasTg"/>
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/ig_button"
-                    android:layout_margin="6dp"/>
+                    android:layout_margin="6dp"
+                    android:id="@+id/hasIg"/>
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/call_button"
-                    android:layout_margin="6dp"/>
+                    android:layout_margin="6dp"
+                    android:id="@+id/hasCall"/>
 
                 <CheckBox
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/card_input"
-                    android:layout_margin="6dp"/>
+                    android:layout_margin="6dp"
+                    android:id="@+id/hasCard"/>
 
             </LinearLayout>
 

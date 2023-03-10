@@ -30,7 +30,8 @@
             android:id="@+id/name"
             android:textSize="16sp"
             android:layout_marginStart="6dp"
-            android:textColor="@color/text"/>
+            android:textColor="@color/text"
+            android:layout_marginTop="4dp"/>
 
 
         <LinearLayout
@@ -151,7 +152,7 @@
         android:textSize="18sp"
         android:background="@drawable/counter_bg"
         android:gravity="center"
-        android:textColor="@color/counter_text"
+        android:textColor="@color/text"
         android:text="213d:21h:23m:31s"/>
     </LinearLayout>
     

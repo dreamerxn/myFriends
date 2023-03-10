@@ -6,7 +6,9 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     tools:ignore="ExtraText"
-    android:background="@color/background">
+    android:background="@color/background"
+    android:animateLayoutChanges="true"
+    >
 
     <ProgressBar
         android:layout_width="wrap_content"
@@ -39,23 +41,21 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:gravity="end">
+            android:gravity="end|center_vertical">
 
-            <com.google.android.material.button.MaterialButton
+            <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="По умолчанию"
-                android:layout_gravity="end"
-                android:layout_marginEnd="16dp"
+                android:layout_gravity="end|center_vertical"
+                android:backgroundTint="@color/accent"
                 android:textSize="12sp"
-                app:cornerRadius="12dp"
-                app:backgroundTint="@color/grid_color"
                 android:textColor="#8236FD"
-                app:icon="@drawable/vector_2_"
-                app:iconGravity="textEnd"
-                app:iconTint="#8236FD"
+                android:id="@+id/sort_by"
+                android:gravity="center_vertical"
+                android:spinnerMode="dropdown"
                 />
 
         </LinearLayout>
