@@ -1,17 +1,12 @@
 package com.dreamclub.myfriends.Adapters;
 
-import static androidx.core.content.ContextCompat.getDrawable;
-import static androidx.core.content.ContextCompat.getSystemService;
-import static androidx.core.content.ContextCompat.startActivity;
-
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.net.Uri;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -19,42 +14,37 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.dreamclub.myfriends.AddFriend;
 import com.dreamclub.myfriends.Crypt.EncryptionUtils;
 import com.dreamclub.myfriends.Data.DataModel;
-import com.dreamclub.myfriends.MainActivity;
 import com.dreamclub.myfriends.R;
+import com.dreamclub.myfriends.Screens.ViewInfo;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.sql.Time;
+
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
+
 import java.util.Calendar;
-import java.util.Date;
+
 import java.util.List;
-import java.util.Objects;
-import java.util.Timer;
-import java.util.TimerTask;
+
+
 
 public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>{
 
@@ -67,7 +57,6 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
     GoogleSignInClient gsc;
     FirebaseAuth firebaseAuth;
     FirebaseUser currentUser;
-    Timer timer;
     ClipboardManager mClipboardManager;
     ClipData clip;
     CountDownTimer countDownTimer;
@@ -84,7 +73,7 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
 
     }
 
-    public class MyViewClass extends RecyclerView.ViewHolder{
+    public static class MyViewClass extends RecyclerView.ViewHolder{
 
         ImageView photoView;
         Button tgButton, igButton, callButton, cardButton;
@@ -102,6 +91,8 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
             name = itemView.findViewById(R.id.name);
             counterView = itemView.findViewById(R.id.counter);
             linear = itemView.findViewById(R.id.parent_of_list);
+
+
 
         }
 
@@ -123,56 +114,32 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         String ig = mDataModel.get(position).getIgURL();
         String cl = mDataModel.get(position).getCallNumb();
         String cr = mDataModel.get(position).getCardNumb();
-        String bd = mDataModel.get(position).getBirthDate();
-        String decPhoto = ph, decName = nm, decTgUrl = tg, decIgUrl = ig, decCallNumb = cl, decCardNumb = cr, decBirth = bd;
-//        try {
-//            if (ph.length()>0) decPhoto = EncryptionUtils.decrypt(ph, UID);
-//
-//            if (nm.length()>0) decName = EncryptionUtils.decrypt(nm, UID);
-//            if (tg.length()>0) decTgUrl = EncryptionUtils.decrypt(tg, UID);
-//            if (ig.length()>0) decIgUrl = EncryptionUtils.decrypt(ig, UID);
-//            if (cl.length()>0) decCallNumb = EncryptionUtils.decrypt(cl, UID);
-//            if (cr.length()>0) decCardNumb = EncryptionUtils.decrypt(cr, UID);
-//            if (bd.length()>0) decBirth = EncryptionUtils.decrypt(bd, UID);
-//
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-
-        String birthDate = decBirth;
-        String photoURL = decPhoto;
-        String name = decName;
-        String tgUrl = decTgUrl;
-        String igUrl = decIgUrl;
-        String callNumb = decCallNumb;
-        String cardNumb = decCardNumb;
+        String birthDate = mDataModel.get(position).getBirthDate();
 
 
-
-
-        holder.name.setText(name);
-        if (photoURL.length()>0){
+        holder.name.setText(nm);
+        if (ph.length()>0){
             Glide.with(mContext)
-                    .load(photoURL)
+                    .load(ph)
                     .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .into(holder.photoView);
         }else {
             holder.photoView.setVisibility(View.GONE);
         }
 
-        if (tgUrl.length()>0){
+        if (tg.length()>0){
             holder.tgButton.setVisibility(View.VISIBLE);
             holder.tgButton.setOnClickListener(v->{
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse("tg:resolve?domain="+tgUrl));
+                intent.setData(Uri.parse("tg:resolve?domain="+ tg));
                 try {
                     mContext.startActivity(intent);
                 }catch (Exception e){
                     try {
-                        intent.setData(Uri.parse("https://t.me/"+tgUrl));
+                        intent.setData(Uri.parse("https://t.me/"+ tg));
                     }catch (Exception er){
                         displayToast("Something went wrong!");
-                        clip = ClipData.newPlainText("label", tgUrl);
+                        clip = ClipData.newPlainText("label", tg);
                         mClipboardManager.setPrimaryClip(clip);
                         displayToast("URL was copied to clipBoard, you can check url!");
                         Log.e("intentError", er.toString());
@@ -185,16 +152,16 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         }else {
             holder.tgButton.setVisibility(View.GONE);
         }
-        if (igUrl.length()>0){
+        if (ig.length()>0){
             holder.igButton.setVisibility(View.VISIBLE);
             holder.igButton.setOnClickListener(v->{
                 Intent igIntent = new Intent(Intent.ACTION_VIEW);
-                igIntent.setData(Uri.parse("https://instagram.com/"+igUrl));
+                igIntent.setData(Uri.parse("https://instagram.com/"+ ig));
                 try {
                     mContext.startActivity(igIntent);
                 }catch (Exception e){
                     displayToast("Something went wrong!");
-                    clip = ClipData.newPlainText("label", igUrl);
+                    clip = ClipData.newPlainText("label", ig);
                     mClipboardManager.setPrimaryClip(clip);
                     displayToast("URL was copied to clipBoard, you can check url!");
                     Log.e("intentError", e.toString());
@@ -204,21 +171,21 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         }else {
             holder.igButton.setVisibility(View.GONE);
         }
-        if (callNumb.length()>0){
+        if (cl.length()>0){
             holder.callButton.setVisibility(View.VISIBLE);
             holder.callButton.setOnClickListener(v->{
                 Intent intent = new Intent(Intent.ACTION_DIAL);
-                intent.setData(Uri.parse("tel:" + callNumb));
+                intent.setData(Uri.parse("tel:" + cl));
                 mContext.startActivity(intent);
             });
         }else {
             holder.callButton.setVisibility(View.GONE);
         }
-        if (cardNumb.length()>0){
+        if (cr.length()>0){
             holder.cardButton.setVisibility(View.VISIBLE);
             holder.cardButton.setOnClickListener(v->{
                 displayToast("Номер карты скопирован в буфер обмена");
-                clip = ClipData.newPlainText("label", cardNumb);
+                clip = ClipData.newPlainText("label", cr);
                 mClipboardManager.setPrimaryClip(clip);
             });
         }else {
@@ -247,6 +214,20 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         int mYear = year;
 
 
+        holder.linear.setOnClickListener(v->{
+            Intent intent = new Intent(mContext, ViewInfo.class);
+            intent.putExtra("photo", ph);
+            intent.putExtra("name", nm);
+            intent.putExtra("tg", tg);
+            intent.putExtra("ig", ig);
+            intent.putExtra("call", cl);
+            intent.putExtra("card", cr);
+            intent.putExtra("year", mYear);
+            intent.putExtra("month", month);
+            intent.putExtra("day", day);
+            intent.putExtra("id", mDataModel.get(position).getId());
+            mContext.startActivity(intent);
+        });
         count(mYear, month, day, holder.counterView, position);
 
     }
@@ -264,7 +245,7 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
 
 
     public boolean checkDate(int year, int month, int day){
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime.now();
 
         LocalDateTime date1 = LocalDateTime.of(year, month, day, 0, 0);
 
@@ -312,6 +293,7 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
     }
 
 
+    @SuppressLint("DefaultLocale")
     public String getCountdownText(long timeInMillis) {
         long seconds = (timeInMillis / 1000) % 60;
         long minutes = (timeInMillis / (1000 * 60)) % 60;

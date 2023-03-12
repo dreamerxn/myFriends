@@ -11,6 +11,15 @@ public class DataModel {
     String cardNumb;
     String birthDate;
     String date;
+    String id;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getDate() {
         return date;
@@ -31,7 +40,7 @@ public class DataModel {
         this.countDownTimer = countDownTimer;
     }
     public DataModel(){}
-    public DataModel(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate, String date){
+    public DataModel(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate, String id){
         this.photoURL = photoURL;
         this.name = name;
         this.tgURL = tgURL;
@@ -39,7 +48,7 @@ public class DataModel {
         this.callNumb = callNumb;
         this.cardNumb = cardNUMB;
         this.birthDate = birthDate;
-        this.date = date;
+        this.id = id;
     }
 
     public String getPhotoURL() {

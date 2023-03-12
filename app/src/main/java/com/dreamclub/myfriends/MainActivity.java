@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView mRecycler;
     MyRecAdapter adapter;
     Spinner sort_by;
-    List<DataModel> list;
+    List<DataModel> list, sortedList;
     FirebaseDatabase database;
     FirebaseAuth firebaseAuth;
     FirebaseUser currentUser;
@@ -61,10 +62,11 @@ public class MainActivity extends AppCompatActivity {
     GoogleSignInOptions gso;
     GoogleSignInClient gsc;
 
-
+    ImageButton layout_change_button;
     ExtendedFloatingActionButton addButton;
     ClipboardManager clipboardManager;
     ProgressBar myProgressBar;
+    int layout = 0;
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,24 +85,26 @@ public class MainActivity extends AppCompatActivity {
 
         clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+
+        mRecycler.setLayoutManager(linearLayoutManager);
+
         mRecycler.setHasFixedSize(false);
         list = new ArrayList<>();
 
         getAccount();
 
-
-
         appCheck();
 
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+        ArrayAdapter<CharSequence> mAdapter = ArrayAdapter.createFromResource(
                 this,
                 R.array.spinner_values,
                 android.R.layout.simple_spinner_item
         );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
-        sort_by.setAdapter(adapter);
+        sort_by.setAdapter(mAdapter);
 
         sort_by.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -126,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
     }
 
 
@@ -137,7 +143,6 @@ public class MainActivity extends AppCompatActivity {
 
         firebaseAppCheck.getToken(true)
                 .addOnSuccessListener(appCheckTokenResult -> {
-                    Toast.makeText(MainActivity.this, "Token: "+appCheckTokenResult.getToken(), Toast.LENGTH_SHORT).show();
                     Log.d("Token","Token: "+appCheckTokenResult.getToken() );
 
                 });
@@ -146,17 +151,43 @@ public class MainActivity extends AppCompatActivity {
 
     public void listSort(int pos){
         if (pos==1) {
+            sortedList = list;
+
             list.sort(Comparator.comparing(DataModel::getBirthDate));
             adapter = new MyRecAdapter(MainActivity.this, list, clipboardManager);
-            mRecycler.setAdapter(adapter);
         } else if (pos==2) {
             list.sort(Comparator.comparing(DataModel::getName));
             adapter = new MyRecAdapter(MainActivity.this, list, clipboardManager);
-            mRecycler.setAdapter(adapter);
         }
-
+        updateUIofRecycler(15);
     }
 
+    public void updateUIofRecycler(int i){
+        if (i==0){
+            if (layout==0){
+                layout=1;
+                StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+                mRecycler.setLayoutManager(staggeredGridLayoutManager);
+            } else if (layout==1) {
+                layout=0;
+                LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+                mRecycler.setLayoutManager(linearLayoutManager);
+            }
+        }
+        else {
+            if (layout==1){
+                StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+                mRecycler.setLayoutManager(staggeredGridLayoutManager);
+            } else if (layout==0) {
+                LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+                mRecycler.setLayoutManager(linearLayoutManager);
+            }
+        }
+
+        mRecycler.setAdapter(adapter);
+        if (adapter!=null)  adapter.notifyDataSetChanged();
+
+    }
     private void viewsFind(){
         addButton = findViewById(R.id.addButton);
         myProgressBar = findViewById(R.id.myProgress);
@@ -164,43 +195,34 @@ public class MainActivity extends AppCompatActivity {
 
         sort_by = findViewById(R.id.sort_by);
 
+        layout_change_button = findViewById(R.id.layout_change_button);
+
+        layout_change_button.setOnClickListener(v->{
+            updateUIofRecycler(0);
+        });
         addButton.setOnClickListener(v->startActivity(new Intent(this, AddFriend.class)));
     }
 
 
     public void fromRDatabase(){
-
-
-        firebaseAuth = FirebaseAuth.getInstance();
-        currentUser = firebaseAuth.getCurrentUser();
-        assert currentUser != null;
-        String mail = currentUser.getEmail();
-        assert mail != null;
-        int pos = mail.indexOf('@');
-        mail = mail.substring(0, pos);
-        acID = delNoDigOrLet(mail);
         dbRef = database.getReference("DATA/"+acId);
+
+
 
         dbRef.keepSynced(true);
 
-        StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        staggeredGridLayoutManager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
 
-        mRecycler.setLayoutManager(linearLayoutManager);
 
         adapter = new MyRecAdapter(this, list, clipboardManager);
 
         dbRef.addValueEventListener(new ValueEventListener() {
+            @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 list.clear();
                 for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                     DataModel dataModel = childSnapshot.getValue(DataModel.class);
 //                    list.add(dataModel);
-                    String dat = dataModel.getName();
-                    String gg;
                     String ph = dataModel.getPhotoURL();
                     String nm = dataModel.getName();
                     String tg = dataModel.getTgURL();
@@ -214,9 +236,12 @@ public class MainActivity extends AppCompatActivity {
                     String igURL;
                     String callNumb;
                     String cardNumb;
-                    String birthDate = bd;
+                    String birthDate;
                     try {
-//                        photoURL = EncryptionUtils.decrypt(ph, UID);
+                        if (ph.length()>0){
+                            photoURL = EncryptionUtils.decrypt(ph, UID);
+                        }
+
                         name = EncryptionUtils.decrypt(nm, UID);
                         tgURL = EncryptionUtils.decrypt(tg, UID);
                         igURL = EncryptionUtils.decrypt(ig, UID);
@@ -224,13 +249,13 @@ public class MainActivity extends AppCompatActivity {
                         cardNumb = EncryptionUtils.decrypt(cr, UID);
                         birthDate = EncryptionUtils.decrypt(bd, UID);
 
-                        list.add(new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNumb, birthDate, dataModel.getDate()));
+
+                        list.add(new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNumb, birthDate, dataModel.getId()));
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
-
-                mRecycler.setAdapter(adapter);
+                updateUIofRecycler(111);
                 adapter.notifyDataSetChanged();
                 myProgressBar.setVisibility(View.GONE);
             }
@@ -240,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("FireBase", "Err: "+error);
             }
         });
+
     }
 
     private static String delNoDigOrLet (String s) {
@@ -276,6 +302,12 @@ public class MainActivity extends AppCompatActivity {
     private void getAccount(){
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
+        assert currentUser != null;
+        String mail = currentUser.getEmail();
+        assert mail != null;
+        int pos = mail.indexOf('@');
+        mail = mail.substring(0, pos);
+        acID = delNoDigOrLet(mail);
 
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()

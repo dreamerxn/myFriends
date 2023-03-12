@@ -1,5 +1,6 @@
 package com.dreamclub.myfriends;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
@@ -26,12 +27,16 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dreamclub.myfriends.Crypt.EncryptionUtils;
 import com.dreamclub.myfriends.Data.DataModel;
+import com.dreamclub.myfriends.Screens.EditActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
@@ -39,8 +44,12 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -50,6 +59,7 @@ import java.io.InputStream;
 import java.security.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class AddFriend extends AppCompatActivity {
@@ -60,8 +70,10 @@ public class AddFriend extends AppCompatActivity {
     Uri imageUri;
     TextInputEditText name, tgurl, igurl, callnumb, cardnumb;
     CheckBox hasTg, hasIg, hasCall, hasCard;
-    String strName, strTgUrl, strIgUrl, strCallNumb, strCardNumb, strBirthDate;
-    ExtendedFloatingActionButton addButton;
+    String strName, strTgUrl, strIgUrl, strCallNumb, strCardNumb, strBirthDate, photoUrl;
+    ExtendedFloatingActionButton addButton, delButton;
+
+    String id, itemId;
 
     FirebaseDatabase database;
     FirebaseAuth firebaseAuth;
@@ -81,11 +93,38 @@ public class AddFriend extends AppCompatActivity {
     EncryptionUtils encrypt;
     TextInputLayout name_layout, tg_layout, ig_layout, call_layout, card_layout;
 
+    boolean isEdit;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_friend);
+        viewFind();
+
+        Intent intent = getIntent();
+        isEdit = intent.getBooleanExtra("isEdit", false);
+        if (isEdit){
+            addButton.setText(getString(R.string.save));
+            photoUrl = intent.getStringExtra("photo");
+            strName = intent.getStringExtra("name");
+            strTgUrl = intent.getStringExtra("tg");
+            strIgUrl = intent.getStringExtra("ig");
+            strCallNumb = intent.getStringExtra("call");
+            strCardNumb = intent.getStringExtra("card");
+            mYear = intent.getIntExtra("year", 0);
+            mMonth = intent.getIntExtra("month", 0);
+            mDay = intent.getIntExtra("day", 0);
+            itemId = intent.getStringExtra("id");
+            updateUI();
+            delButton.setVisibility(View.VISIBLE);
+
+        }
+        else{
+            photoUrl = "";
+            delButton.setVisibility(View.GONE);
+
+        }
 
         database = FirebaseDatabase.getInstance("https://my-friends-91830-default-rtdb.europe-west1.firebasedatabase.app/");
 
@@ -96,20 +135,23 @@ public class AddFriend extends AppCompatActivity {
 
         encrypt = new EncryptionUtils();
 
-        viewFind();
+
         checkBoxes();
         choosePhoto.setOnClickListener(v->pickImage());
 
+
         addButton.setOnClickListener(v->{
+            long timestamp = System.currentTimeMillis();
+            id = Long.toString(timestamp);
             if (imageUri!=null){
-                upload(imageUri);
+                upload(imageUri, id);
             }
-            else if (imageUri==null){
-                upload();
+            else {
+                upload(id, photoUrl);
             }
-            else Toast.makeText(this, "Choose a photo first", Toast.LENGTH_SHORT).show();
-            
+
         });
+
         birthDate.setOnClickListener(v->{
             Calendar calendar = Calendar.getInstance();
             int year = calendar.get(Calendar.YEAR);
@@ -159,6 +201,8 @@ public class AddFriend extends AppCompatActivity {
         hasCard = findViewById(R.id.hasCard);
 
 
+        delButton = findViewById(R.id.deleteButton);
+        delButton.setOnClickListener(v->delete(itemId));
 
         checkForWhiteSpaces(tgurl);
         checkForWhiteSpaces(igurl);
@@ -187,54 +231,78 @@ public class AddFriend extends AppCompatActivity {
     }
 
     public void checkBoxes(){
-        hasTg.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) {
-                    tg_layout.setVisibility(View.VISIBLE);
-                    // действия, которые нужно выполнить, если флажок установлен
-                } else {
-                    tg_layout.setVisibility(View.GONE);
-                    // действия, которые нужно выполнить, если флажок снят
-                }
+        hasTg.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) {
+                tg_layout.setVisibility(View.VISIBLE);
+                // действия, которые нужно выполнить, если флажок установлен
+            } else {
+                tg_layout.setVisibility(View.GONE);
+                // действия, которые нужно выполнить, если флажок снят
             }
         });
-        hasIg.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) {
-                    ig_layout.setVisibility(View.VISIBLE);
-                    // действия, которые нужно выполнить, если флажок установлен
-                } else {
-                    ig_layout.setVisibility(View.GONE);
-                    // действия, которые нужно выполнить, если флажок снят
-                }
+        hasIg.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) {
+                ig_layout.setVisibility(View.VISIBLE);
+                // действия, которые нужно выполнить, если флажок установлен
+            } else {
+                ig_layout.setVisibility(View.GONE);
+                // действия, которые нужно выполнить, если флажок снят
             }
         });
-        hasCall.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) {
-                    call_layout.setVisibility(View.VISIBLE);
-                    // действия, которые нужно выполнить, если флажок установлен
-                } else {
-                    call_layout.setVisibility(View.GONE);
-                    // действия, которые нужно выполнить, если флажок снят
-                }
+        hasCall.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) {
+                call_layout.setVisibility(View.VISIBLE);
+                // действия, которые нужно выполнить, если флажок установлен
+            } else {
+                call_layout.setVisibility(View.GONE);
+                // действия, которые нужно выполнить, если флажок снят
             }
         });;
-        hasCard.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) {
-                    card_layout.setVisibility(View.VISIBLE);
-                    // действия, которые нужно выполнить, если флажок установлен
-                } else {
-                    card_layout.setVisibility(View.GONE);
-                    // действия, которые нужно выполнить, если флажок снят
-                }
+        hasCard.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) {
+                card_layout.setVisibility(View.VISIBLE);
+                // действия, которые нужно выполнить, если флажок установлен
+            } else {
+                card_layout.setVisibility(View.GONE);
+                // действия, которые нужно выполнить, если флажок снят
             }
         });;
+    }
+
+    @SuppressLint("SetTextI18n")
+    public void updateUI(){
+        name.setText(strName);
+        tgurl.setText(strTgUrl);
+        igurl.setText(strIgUrl);
+        callnumb.setText(strCallNumb);
+        cardnumb.setText(strCardNumb);
+        if (photoUrl.length()>0){
+            Glide.with(this)
+                    .load(photoUrl)
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .into(choosePhoto);
+        }
+        if (strTgUrl.length()>0){
+            tg_layout.setVisibility(View.VISIBLE);
+            hasTg.setChecked(true);
+        }
+
+        if (strIgUrl.length()>0){
+            ig_layout.setVisibility(View.VISIBLE);
+            hasIg.setChecked(true);
+        }
+
+        if (strCallNumb.length()>0){
+            call_layout.setVisibility(View.VISIBLE);
+            hasCall.setChecked(true);
+        }
+
+        if (strCardNumb.length()>0){
+            card_layout.setVisibility(View.VISIBLE);
+            hasCard.setChecked(false);
+        }
+
+        birthDate.setText(mYear+"-"+mMonth+"-"+mDay);
     }
 
 
@@ -254,13 +322,23 @@ public class AddFriend extends AppCompatActivity {
         }
     }
 
-    public void upload(Uri uri){
+    public void upload(Uri uri, String mId){
+        if (photoUrl!=null&&photoUrl.length()>0){
+            StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(photoUrl);
+            storageRef.delete()
+                    .addOnSuccessListener(aVoid -> {
 
-        strName = name.getText().toString();
-        strTgUrl = tgurl.getText().toString();
-        strIgUrl = igurl.getText().toString();
-        strCallNumb = callnumb.getText().toString();
-        strCardNumb = cardnumb.getText().toString();
+                    })
+                    .addOnFailureListener(e -> {
+                        // Произошла ошибка при удалении файла
+                    });
+        }
+
+        strName = Objects.requireNonNull(name.getText()).toString();
+        strTgUrl = Objects.requireNonNull(tgurl.getText()).toString();
+        strIgUrl = Objects.requireNonNull(igurl.getText()).toString();
+        strCallNumb = Objects.requireNonNull(callnumb.getText()).toString();
+        strCardNumb = Objects.requireNonNull(cardnumb.getText()).toString();
 
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
         if (!strName.isEmpty()){
@@ -268,7 +346,7 @@ public class AddFriend extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.bday_error), Toast.LENGTH_SHORT).show();
             }
             else {
-                Toast.makeText(this, getString(R.string.upload), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.upload), Toast.LENGTH_SHORT).show();
                 String strMonth = Integer.toString(mMonth);
                 if (mMonth<10){
                     strMonth = "0"+mMonth;
@@ -282,41 +360,28 @@ public class AddFriend extends AppCompatActivity {
                 StorageReference storageReference = firebaseStorage.getReference(acId+"/"+strName+".jpg");
 
                 UploadTask uploadTask = storageReference.putFile(uri);
-                uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Toast.makeText(AddFriend.this, "Success", Toast.LENGTH_SHORT).show();
-                        storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                uploadTask.addOnSuccessListener(taskSnapshot -> {
+                    storageReference.getDownloadUrl().addOnSuccessListener(uri1 -> {
 
-                            @Override
+                        String PhotoURL = uri1.toString();
+                        String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
+                        try {
+                            encPhoto = EncryptionUtils.encrypt(PhotoURL, UID);
+                            encName = EncryptionUtils.encrypt(strName, UID);
+                            encTg = EncryptionUtils.encrypt(strTgUrl, UID);
+                            encIg = EncryptionUtils.encrypt(strIgUrl, UID);
+                            encCall = EncryptionUtils.encrypt(strCallNumb, UID);
+                            encCard = EncryptionUtils.encrypt(strCardNumb, UID);
+                            encBirth = EncryptionUtils.encrypt(strBirthDate, UID);
 
-                            public void onSuccess(Uri uri) {
-
-                                String PhotoURL = uri.toString();
-                                String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
-                                try {
-                                    encPhoto = EncryptionUtils.encrypt(PhotoURL, UID);
-                                    encName = EncryptionUtils.encrypt(strName, UID);
-                                    encTg = EncryptionUtils.encrypt(strTgUrl, UID);
-                                    encIg = EncryptionUtils.encrypt(strIgUrl, UID);
-                                    encCall = EncryptionUtils.encrypt(strCallNumb, UID);
-                                    encCard = EncryptionUtils.encrypt(strCardNumb, UID);
-                                    encBirth = EncryptionUtils.encrypt(strBirthDate, UID);
-
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-
-                                String date = mMonth+"-"+mDay;
-                                pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, date);
-                                dayOfYearCalendar = null;
-                                dayOfYear = 0;
-                                finish();
-                            }
-                        });
-                    }
-
-
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        if (isEdit) save(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, itemId);
+                        else pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, mId);
+                        finish();
+                        Toast.makeText(this, getString(R.string.loaded), Toast.LENGTH_SHORT).show();
+                    });
                 });
             }
         }
@@ -328,22 +393,20 @@ public class AddFriend extends AppCompatActivity {
 
     }
 
-    public void upload(){
+    public void upload(String mId, String mPhoto){
 
-        strName = name.getText().toString();
-        strTgUrl = tgurl.getText().toString();
-        strIgUrl = igurl.getText().toString();
-        strCallNumb = callnumb.getText().toString();
-        strCardNumb = cardnumb.getText().toString();
-        strCardNumb = cardnumb.getText().toString();
+        strName = Objects.requireNonNull(name.getText()).toString();
+        strTgUrl = Objects.requireNonNull(tgurl.getText()).toString();
+        strIgUrl = Objects.requireNonNull(igurl.getText()).toString();
+        strCallNumb = Objects.requireNonNull(callnumb.getText()).toString();
+        strCardNumb = Objects.requireNonNull(cardnumb.getText()).toString();
 
-        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
         if (!strName.isEmpty()){
             if (mYear==0 || mMonth==0 || mDay==0){
                 Toast.makeText(this, getString(R.string.bday_error), Toast.LENGTH_SHORT).show();
             }
             else {
-                Toast.makeText(this, getString(R.string.upload), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.upload), Toast.LENGTH_SHORT).show();
                 String strMonth = Integer.toString(mMonth);
                 if (mMonth<10){
                     strMonth = "0"+mMonth;
@@ -356,7 +419,8 @@ public class AddFriend extends AppCompatActivity {
 
                 String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
                 try {
-                    encPhoto = "";
+                    if (mPhoto.length()>0) encPhoto = EncryptionUtils.encrypt(mPhoto, UID);
+                    else encPhoto = "";
                     encName = EncryptionUtils.encrypt(strName, UID);
                     encTg = EncryptionUtils.encrypt(strTgUrl, UID);
                     encIg = EncryptionUtils.encrypt(strIgUrl, UID);
@@ -367,12 +431,10 @@ public class AddFriend extends AppCompatActivity {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-
-                String date = mMonth+"-"+mDay;
-                pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, date);
-                dayOfYearCalendar = null;
-                dayOfYear = 0;
+                if (isEdit) save(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, itemId);
+                else pushData(encPhoto, encName, encTg, encIg, encCall, encCard, encBirth, mId);
                 finish();
+                Toast.makeText(this, getString(R.string.loaded), Toast.LENGTH_SHORT).show();
             }
         }
         else {
@@ -382,13 +444,9 @@ public class AddFriend extends AppCompatActivity {
 
 
     }
-    public void pushData(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate, String date){
+    public void pushData(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate, String mId){
 
-        Long timeLong = System.currentTimeMillis()/1000;
-
-        int UID = ThreadLocalRandom.current().nextInt(0, 100000000);
-
-        DataModel data = new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNUMB, birthDate, date);
+        DataModel data = new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNUMB, birthDate, mId);
         dbRef.push().setValue(data);
 
     }
@@ -402,23 +460,20 @@ public class AddFriend extends AppCompatActivity {
     }
 
     public void checkForWhiteSpaces(EditText editText){
-        InputFilter noSpaceFilter = new InputFilter() {
-            public CharSequence filter(CharSequence source, int start, int end,
-                                       Spanned dest, int dstart, int dend) {
-                // Проверяем каждый введенный символ
-                for (int i = start; i < end; i++) {
-                    if (Character.isWhitespace(source.charAt(i))) {
-                        // Если символ является пробелом, то возвращаем пустую строку, чтобы его не добавлять
-                        String text = editText.getText().toString();
-                        if (!text.isEmpty()) {
-                            return text;
-                        }
-                        else return "";
+        InputFilter noSpaceFilter = (source, start, end, dest, dstart, dend) -> {
+            // Проверяем каждый введенный символ
+            for (int i = start; i < end; i++) {
+                if (Character.isWhitespace(source.charAt(i))) {
+                    // Если символ является пробелом, то возвращаем пустую строку, чтобы его не добавлять
+                    String text = editText.getText().toString();
+                    if (!text.isEmpty()) {
+                        return text;
                     }
+                    else return "";
                 }
-                // Если символ не является пробелом, то возвращаем его без изменений
-                return null;
             }
+            // Если символ не является пробелом, то возвращаем его без изменений
+            return null;
         };
 
 // Устанавливаем фильтр ввода в EditText
@@ -447,4 +502,54 @@ public class AddFriend extends AppCompatActivity {
             acId = account.getId();
         }
     }
+
+
+    public void delete(String mId){
+        Query query = dbRef.orderByChild("id").equalTo(mId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnapshot : snapshot.getChildren()){
+                    childSnapshot.getRef().removeValue();
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        if (photoUrl!=null&&photoUrl.length()>0){
+            StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(photoUrl);
+            storageRef.delete()
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(AddFriend.this, getString(R.string.deleted), Toast.LENGTH_SHORT).show();
+                        finishAffinity();
+                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    })
+                    .addOnFailureListener(e -> {
+                        // Произошла ошибка при удалении файла
+                    });
+        }
+
+    }
+    public void save(String photoURL, String name, String tgURL, String igURL, String callNumb, String cardNUMB, String birthDate, String mId){
+        Query query = dbRef.orderByChild("id").equalTo(mId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnapshot : snapshot.getChildren()){
+                    DataModel data = new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNUMB, birthDate, mId);
+                    childSnapshot.getRef().setValue(data);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
 }

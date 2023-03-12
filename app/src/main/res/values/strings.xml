@@ -22,10 +22,15 @@
     <string name="add">Add</string>
     <string name="extra_options">Extra options:</string>
 
+    <string name="save">Save</string>
+
     <string-array name="spinner_values">
         <item>Default</item>
         <item>By Birth Date</item>
         <item>By Name</item>
     </string-array>
+
+    <string name="loaded">Loaded successfully</string>
+    <string name="deleted">Deleted!</string>
 
 </resources>

@@ -37,7 +37,8 @@
             android:padding="16dp"
             android:backgroundTint="@color/grid_color"
             android:layout_gravity="center_vertical"
-            android:layout_margin="0dp"/>
+            android:layout_margin="0dp"
+            android:id="@+id/layout_change_button"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -54,7 +55,8 @@
                 android:textSize="12sp"
                 android:textColor="#8236FD"
                 android:id="@+id/sort_by"
-                android:gravity="center_vertical"
+                android:gravity="center_vertical|end"
+                android:textAlignment="viewEnd"
                 android:spinnerMode="dropdown"
                 />
 
@@ -70,9 +72,10 @@
         android:id="@+id/friendsList"
         android:paddingBottom="60dp"
         android:clipToPadding="false"
-        android:layout_below="@id/sort_container"
+        android:layout_marginTop="60dp"
         android:layout_marginStart="6dp"
-        android:layout_marginEnd="6dp"/>
+        android:layout_marginEnd="6dp"
+        android:layout_centerInParent="false"/>
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:layout_width="wrap_content"

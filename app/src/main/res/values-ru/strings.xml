@@ -23,10 +23,15 @@
     <string name="add">Добавить</string>
     <string name="extra_options">Дополнительные данные:</string>
 
+    <string name="save">Сохранить</string>
+
     <string-array name="spinner_values">
         <item>По умолчанию</item>
         <item>По дате рождения</item>
         <item>По имени</item>
     </string-array>
+
+    <string name="loaded">Загружено</string>
+    <string name="deleted">Удалено!</string>
 
 </resources>
