@@ -205,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void fromRDatabase(){
-        dbRef = database.getReference("DATA/"+acId);
+        dbRef = database.getReference("DATA/"+UID);
 
 
 
@@ -239,15 +239,15 @@ public class MainActivity extends AppCompatActivity {
                     String birthDate;
                     try {
                         if (ph.length()>0){
-                            photoURL = EncryptionUtils.decrypt(ph, UID);
+                            photoURL = EncryptionUtils.decrypt(ph, acId);
                         }
 
-                        name = EncryptionUtils.decrypt(nm, UID);
-                        tgURL = EncryptionUtils.decrypt(tg, UID);
-                        igURL = EncryptionUtils.decrypt(ig, UID);
-                        callNumb = EncryptionUtils.decrypt(cl, UID);
-                        cardNumb = EncryptionUtils.decrypt(cr, UID);
-                        birthDate = EncryptionUtils.decrypt(bd, UID);
+                        name = EncryptionUtils.decrypt(nm, acId);
+                        tgURL = EncryptionUtils.decrypt(tg, acId);
+                        igURL = EncryptionUtils.decrypt(ig, acId);
+                        callNumb = EncryptionUtils.decrypt(cl, acId);
+                        cardNumb = EncryptionUtils.decrypt(cr, acId);
+                        birthDate = EncryptionUtils.decrypt(bd, acId);
 
 
                         list.add(new DataModel(photoURL, name, tgURL, igURL, callNumb, cardNumb, birthDate, dataModel.getId()));

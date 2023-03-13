@@ -4,24 +4,24 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
+
 import android.app.DatePickerDialog;
-import android.content.Context;
+
 import android.content.Intent;
-import android.graphics.Color;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
-import android.text.Spanned;
+
 import android.text.TextWatcher;
-import android.util.Log;
+
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.DatePicker;
+
+
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -31,13 +31,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.dreamclub.myfriends.Crypt.EncryptionUtils;
 import com.dreamclub.myfriends.Data.DataModel;
-import com.dreamclub.myfriends.Screens.EditActivity;
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -54,13 +54,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.security.Timestamp;
 import java.util.Calendar;
-import java.util.Date;
+
 import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
+
 
 public class AddFriend extends AppCompatActivity {
 
@@ -130,7 +127,7 @@ public class AddFriend extends AppCompatActivity {
 
         getAccount();
 
-        dbRef = database.getReference("DATA/"+acId);
+        dbRef = database.getReference("DATA/"+UID);
         dbRef.keepSynced(true);
 
         encrypt = new EncryptionUtils();
@@ -357,7 +354,7 @@ public class AddFriend extends AppCompatActivity {
                 }
                 strBirthDate = mYear+"-"+strMonth+"-"+strDay;
 
-                StorageReference storageReference = firebaseStorage.getReference(acId+"/"+strName+".jpg");
+                StorageReference storageReference = firebaseStorage.getReference(UID+"/"+strName+".jpg");
 
                 UploadTask uploadTask = storageReference.putFile(uri);
                 uploadTask.addOnSuccessListener(taskSnapshot -> {
@@ -366,13 +363,13 @@ public class AddFriend extends AppCompatActivity {
                         String PhotoURL = uri1.toString();
                         String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
                         try {
-                            encPhoto = EncryptionUtils.encrypt(PhotoURL, UID);
-                            encName = EncryptionUtils.encrypt(strName, UID);
-                            encTg = EncryptionUtils.encrypt(strTgUrl, UID);
-                            encIg = EncryptionUtils.encrypt(strIgUrl, UID);
-                            encCall = EncryptionUtils.encrypt(strCallNumb, UID);
-                            encCard = EncryptionUtils.encrypt(strCardNumb, UID);
-                            encBirth = EncryptionUtils.encrypt(strBirthDate, UID);
+                            encPhoto = EncryptionUtils.encrypt(PhotoURL, acId);
+                            encName = EncryptionUtils.encrypt(strName, acId);
+                            encTg = EncryptionUtils.encrypt(strTgUrl, acId);
+                            encIg = EncryptionUtils.encrypt(strIgUrl, acId);
+                            encCall = EncryptionUtils.encrypt(strCallNumb, acId);
+                            encCard = EncryptionUtils.encrypt(strCardNumb, acId);
+                            encBirth = EncryptionUtils.encrypt(strBirthDate, acId);
 
                         } catch (Exception e) {
                             throw new RuntimeException(e);
@@ -419,14 +416,14 @@ public class AddFriend extends AppCompatActivity {
 
                 String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
                 try {
-                    if (mPhoto.length()>0) encPhoto = EncryptionUtils.encrypt(mPhoto, UID);
+                    if (mPhoto.length()>0) encPhoto = EncryptionUtils.encrypt(mPhoto, acId);
                     else encPhoto = "";
-                    encName = EncryptionUtils.encrypt(strName, UID);
-                    encTg = EncryptionUtils.encrypt(strTgUrl, UID);
-                    encIg = EncryptionUtils.encrypt(strIgUrl, UID);
-                    encCall = EncryptionUtils.encrypt(strCallNumb, UID);
-                    encCard = EncryptionUtils.encrypt(strCardNumb, UID);
-                    encBirth = EncryptionUtils.encrypt(strBirthDate, UID);
+                    encName = EncryptionUtils.encrypt(strName, acId);
+                    encTg = EncryptionUtils.encrypt(strTgUrl, acId);
+                    encIg = EncryptionUtils.encrypt(strIgUrl, acId);
+                    encCall = EncryptionUtils.encrypt(strCallNumb, acId);
+                    encCard = EncryptionUtils.encrypt(strCardNumb, acId);
+                    encBirth = EncryptionUtils.encrypt(strBirthDate, acId);
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);
