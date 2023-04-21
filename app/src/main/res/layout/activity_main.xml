@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,83 +10,114 @@
     android:animateLayoutChanges="true"
     >
 
-    <ProgressBar
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:id="@+id/myProgress"/>
-
-    <LinearLayout
+    <com.google.android.material.bottomappbar.BottomAppBar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/sort_container"
-        android:orientation="horizontal"
-        android:layout_marginBottom="0dp">
+        android:layout_gravity="bottom"
+        app:fabAlignmentMode="center"
+        app:fabCradleMargin="12dp"
+        app:fabCradleRoundedCornerRadius="16dp"
+        app:fabCradleVerticalOffset="10dp"
+        android:id="@+id/bottomAppBar">
+        
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/bottomNavigationView"
+            android:layout_marginEnd="16dp"
+            android:background="@android:color/transparent"
+            app:menu="@menu/bottom_nav_menu"/>
+        
+    </com.google.android.material.bottomappbar.BottomAppBar>
 
-        <Spinner
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:translationZ="-1dp">
+
+
+        <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="12dp">
-
-        </Spinner>
-
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/grid_view"
-            android:padding="16dp"
-            android:backgroundTint="@color/grid_color"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="0dp"
-            android:id="@+id/layout_change_button"/>
+            android:layout_centerInParent="true"
+            android:id="@+id/myProgress"/>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/sort_container"
             android:orientation="horizontal"
-            android:gravity="end|center_vertical">
+            android:layout_marginBottom="0dp">
 
             <Spinner
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="По умолчанию"
-                android:layout_gravity="end|center_vertical"
-                android:backgroundTint="@color/accent"
-                android:textSize="12sp"
-                android:textColor="#8236FD"
-                android:id="@+id/sort_by"
-                android:gravity="center_vertical|end"
-                android:textAlignment="viewEnd"
-                android:spinnerMode="dropdown"
-                />
+                android:layout_margin="12dp">
+
+            </Spinner>
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/grid_view"
+                android:padding="16dp"
+                android:backgroundTint="@color/grid_color"
+                android:layout_gravity="center_vertical"
+                android:layout_margin="0dp"
+                android:id="@+id/layout_change_button"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="end|center_vertical">
+
+                <Spinner
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="По умолчанию"
+                    android:layout_gravity="end|center_vertical"
+                    android:backgroundTint="@color/accent"
+                    android:textSize="12sp"
+                    android:textColor="#8236FD"
+                    android:id="@+id/sort_by"
+                    android:gravity="center_vertical|end"
+                    android:textAlignment="viewEnd"
+                    android:spinnerMode="dropdown"
+                    />
+
+            </LinearLayout>
+
+
 
         </LinearLayout>
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/friendsList"
+            android:paddingBottom="60dp"
+            android:clipToPadding="false"
+            android:layout_marginTop="60dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
+            android:layout_centerInParent="false"/>
+
+    </RelativeLayout>
 
 
-    </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/friendsList"
-        android:paddingBottom="60dp"
-        android:clipToPadding="false"
-        android:layout_marginTop="60dp"
-        android:layout_marginStart="6dp"
-        android:layout_marginEnd="6dp"
-        android:layout_centerInParent="false"/>
-
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/addButton"
-        android:text="@string/add_a_friend"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
+        android:src="@drawable/baseline_add_24"
         android:layout_margin="12dp"
         android:backgroundTint="@color/accent"
         android:textColor="@color/text"
-        android:gravity="center"/>
+        android:gravity="center"
+        app:layout_anchor="@id/bottomAppBar"/>
 
-</RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

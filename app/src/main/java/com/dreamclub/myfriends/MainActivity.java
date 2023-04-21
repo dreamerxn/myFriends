@@ -30,7 +30,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
@@ -63,9 +65,10 @@ public class MainActivity extends AppCompatActivity {
     GoogleSignInClient gsc;
 
     ImageButton layout_change_button;
-    ExtendedFloatingActionButton addButton;
+    FloatingActionButton addButton;
     ClipboardManager clipboardManager;
     ProgressBar myProgressBar;
+    BottomNavigationView bottomNavigationView;
     int layout = 0;
     @SuppressLint("MissingInflatedId")
     @Override
@@ -168,21 +171,26 @@ public class MainActivity extends AppCompatActivity {
                 layout=1;
                 StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
                 mRecycler.setLayoutManager(staggeredGridLayoutManager);
+                adapter.setLinear(false);
             } else if (layout==1) {
                 layout=0;
                 LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
                 mRecycler.setLayoutManager(linearLayoutManager);
+                adapter.setLinear(true);
             }
         }
         else {
             if (layout==1){
                 StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
                 mRecycler.setLayoutManager(staggeredGridLayoutManager);
+                adapter.setLinear(false);
             } else if (layout==0) {
                 LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
                 mRecycler.setLayoutManager(linearLayoutManager);
+                adapter.setLinear(true);
             }
         }
+
 
         mRecycler.setAdapter(adapter);
         if (adapter!=null)  adapter.notifyDataSetChanged();
@@ -201,6 +209,11 @@ public class MainActivity extends AppCompatActivity {
             updateUIofRecycler(0);
         });
         addButton.setOnClickListener(v->startActivity(new Intent(this, AddFriend.class)));
+
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        bottomNavigationView.setBackground(null);
+        bottomNavigationView.getMenu().getItem(1).setEnabled(false);
+
     }
 
 
@@ -222,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
                 list.clear();
                 for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                     DataModel dataModel = childSnapshot.getValue(DataModel.class);
+                    String nnn = childSnapshot.getKey();
 //                    list.add(dataModel);
                     String ph = dataModel.getPhotoURL();
                     String nm = dataModel.getName();
@@ -318,5 +332,12 @@ public class MainActivity extends AppCompatActivity {
         if(account !=null){
             acId = account.getId();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        fromRDatabase();
+        super.onStart();
+
     }
 }

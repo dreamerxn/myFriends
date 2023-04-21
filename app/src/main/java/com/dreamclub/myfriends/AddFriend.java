@@ -212,7 +212,7 @@ public class AddFriend extends AppCompatActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String cardNumber = s.toString().replaceAll("\\s", "");
 
-                if(!cardNumber.matches("^4[0-9]{12}(?:[0-9]{3})?$|^(5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}$|^(?:2131|1800|35\\d{3})\\d{11}$")){
+                if(cardNumber.length()!=16){
                 card_layout.setError(getString(R.string.card_error));
 
                 } else {
@@ -353,6 +353,12 @@ public class AddFriend extends AppCompatActivity {
                     strDay = "0"+mDay;
                 }
                 strBirthDate = mYear+"-"+strMonth+"-"+strDay;
+                String encName;
+                try {
+                    encName = EncryptionUtils.encrypt(strName, acId);
+                }catch (Exception e){
+                    throw new RuntimeException();
+                }
 
                 StorageReference storageReference = firebaseStorage.getReference(UID+"/"+strName+".jpg");
 
@@ -361,10 +367,10 @@ public class AddFriend extends AppCompatActivity {
                     storageReference.getDownloadUrl().addOnSuccessListener(uri1 -> {
 
                         String PhotoURL = uri1.toString();
-                        String encPhoto, encName, encTg, encIg, encCall, encCard, encBirth;
+                        String encPhoto, encTg, encIg, encCall, encCard, encBirth;
                         try {
                             encPhoto = EncryptionUtils.encrypt(PhotoURL, acId);
-                            encName = EncryptionUtils.encrypt(strName, acId);
+
                             encTg = EncryptionUtils.encrypt(strTgUrl, acId);
                             encIg = EncryptionUtils.encrypt(strIgUrl, acId);
                             encCall = EncryptionUtils.encrypt(strCallNumb, acId);

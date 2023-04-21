@@ -2,10 +2,13 @@ package com.dreamclub.myfriends.Screens;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -21,9 +24,12 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.dreamclub.myfriends.Adapters.IdeaRecAdapter;
+import com.dreamclub.myfriends.Adapters.MyRecAdapter;
 import com.dreamclub.myfriends.AddFriend;
 import com.dreamclub.myfriends.Crypt.EncryptionUtils;
 import com.dreamclub.myfriends.Data.DataModel;
+import com.dreamclub.myfriends.Data.IdeaDataModel;
 import com.dreamclub.myfriends.MainActivity;
 import com.dreamclub.myfriends.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -45,7 +51,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 public class ViewInfo extends AppCompatActivity {
 
@@ -61,6 +70,10 @@ public class ViewInfo extends AppCompatActivity {
     ClipData clip;
 
     FloatingActionButton editButton;
+    RecyclerView ideaRecycler;
+    IdeaRecAdapter mAdapter;
+    List<IdeaDataModel> mList;
+
 
     FirebaseDatabase database;
     DatabaseReference dbRef;
@@ -71,19 +84,25 @@ public class ViewInfo extends AppCompatActivity {
     FirebaseUser currentUser;
 
     CountDownTimer countDownTimer;
+
+    FloatingActionButton addIdeaFAB;
+
+    String key;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_info);
 
+        mList = new ArrayList<>();
         viewFind();
         getAccount();
-
 
         Intent intent = getIntent();
         id = intent.getStringExtra("id");
 
         getData(id, true);
+        mClipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+
 
     }
 
@@ -98,6 +117,10 @@ public class ViewInfo extends AppCompatActivity {
         editButton = findViewById(R.id.edit_fab);
 
         editButton.setOnClickListener(v->onEdit());
+        ideaRecycler = findViewById(R.id.ideaRecycler);
+
+        addIdeaFAB = findViewById(R.id.addIdea);
+        addIdeaFAB.setOnClickListener(v->pushIdea("IDEA"));
     }
 
     public void onEdit(){
@@ -115,6 +138,7 @@ public class ViewInfo extends AppCompatActivity {
         intent.putExtra("isEdit", true);
         startActivity(intent);
     }
+
     public void updateUI(String mName, String mPhoto, String mTg, String mIg, String mCall, String mCard){
 
         name.setText(mName);
@@ -191,6 +215,10 @@ public class ViewInfo extends AppCompatActivity {
         }else {
             cardButton.setVisibility(View.GONE);
         }
+
+        ideaRecycler.setLayoutManager(new LinearLayoutManager(this));
+
+
     }
 
     public void count(int year, int month, int day, TextView textView){
@@ -244,15 +272,16 @@ public class ViewInfo extends AppCompatActivity {
 
     public void getData(String mId, boolean isNew){
 
-
         database = FirebaseDatabase.getInstance("https://my-friends-91830-default-rtdb.europe-west1.firebasedatabase.app/");
-        dbRef = database.getReference("DATA/"+acId);
+        dbRef = database.getReference("DATA/"+UID);
         Query query = dbRef.orderByChild("id").equalTo(mId);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot childSnapshot : snapshot.getChildren()){
                     DataModel data = childSnapshot.getValue(DataModel.class);
+                    key = childSnapshot.getKey();
+                    Toast.makeText(ViewInfo.this, "LDLDL: "+key, Toast.LENGTH_SHORT).show();
                     assert data != null;
                     strName = data.getName();
                     photoUrl = data.getPhotoURL();
@@ -265,15 +294,15 @@ public class ViewInfo extends AppCompatActivity {
 
                     try {
                         if (photoUrl.length()>0){
-                            decPhoto = EncryptionUtils.decrypt(photoUrl, UID);
+                            decPhoto = EncryptionUtils.decrypt(photoUrl, acId);
                         }
 
-                        decName = EncryptionUtils.decrypt(strName, UID);
-                        decTg = EncryptionUtils.decrypt(tg, UID);
-                        decIg = EncryptionUtils.decrypt(ig, UID);
-                        decCall = EncryptionUtils.decrypt(call, UID);
-                        decCard = EncryptionUtils.decrypt(card, UID);
-                        decBirth = EncryptionUtils.decrypt(birthDate, UID);
+                        decName = EncryptionUtils.decrypt(strName, acId);
+                        decTg = EncryptionUtils.decrypt(tg, acId);
+                        decIg = EncryptionUtils.decrypt(ig, acId);
+                        decCall = EncryptionUtils.decrypt(call, acId);
+                        decCard = EncryptionUtils.decrypt(card, acId);
+                        decBirth = EncryptionUtils.decrypt(birthDate, acId);
 
                     } catch (Exception e) {
                         throw new RuntimeException(e);
@@ -281,6 +310,7 @@ public class ViewInfo extends AppCompatActivity {
                     makeBirthDate(decBirth, isNew);
                     updateUI(decName, decPhoto, decTg, decIg, decCall, decCard);
                 }
+                fromRDatabase();
             }
 
             @Override
@@ -362,5 +392,56 @@ public class ViewInfo extends AppCompatActivity {
 
         getData(id, false);
         super.onResume();
+    }
+
+    public void fromRDatabase(){
+        dbRef = database.getReference("DATA/"+UID+"/"+key+"/Ideas/");
+
+        dbRef.keepSynced(true);
+
+        mAdapter = new IdeaRecAdapter(mList, this);
+
+
+        dbRef.addValueEventListener(new ValueEventListener() {
+            @SuppressLint("NotifyDataSetChanged")
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                mList.clear();
+                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                    Toast.makeText(ViewInfo.this, "GGWP: "+childSnapshot.getValue(), Toast.LENGTH_SHORT).show();
+                    IdeaDataModel dataModel = childSnapshot.getValue(IdeaDataModel.class);
+                    mList.add(dataModel);
+                    assert dataModel != null;
+                    String text = dataModel.getText();
+                    String date = dataModel.getDate();
+                    String id = dataModel.getId();
+                    Toast.makeText(ViewInfo.this, "GG: "+text, Toast.LENGTH_SHORT).show();
+
+                }
+                ideaRecycler.setAdapter(mAdapter);
+                mAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FireBase", "Err: "+error);
+            }
+        });
+    }
+
+
+    public void pushIdea(String text){
+
+        String date;
+        Date currentTime = Calendar.getInstance().getTime();
+
+        date = currentTime.getYear()+"-"+currentTime.getMonth()+"-"+currentTime.getDay();
+        long timestamp = System.currentTimeMillis();
+        String ideaID;
+        ideaID = Long.toString(timestamp);
+        IdeaDataModel data = new IdeaDataModel(text, date, ideaID);
+        dbRef.push().setValue(data);
+
+        fromRDatabase();
     }
 }

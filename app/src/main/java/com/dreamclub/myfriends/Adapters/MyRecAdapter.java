@@ -63,6 +63,7 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
 
     EncryptionUtils encryptionUtils;
 
+    boolean isLinear;
 
     public MyRecAdapter(Context context, List<DataModel> dataModel, ClipboardManager clipboardManager){
         this.mContext = context;
@@ -73,6 +74,9 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
 
     }
 
+    public void setLinear(boolean isLinear){
+        this.isLinear = isLinear;
+    }
     public static class MyViewClass extends RecyclerView.ViewHolder{
 
         ImageView photoView;
@@ -101,7 +105,14 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
     @NonNull
     @Override
     public MyViewClass onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = layoutInflater.inflate(R.layout.list_item, parent, false);
+        View view;
+        if(isLinear){
+            view = layoutInflater.inflate(R.layout.linear_list_item, parent, false);
+        }
+        else {
+            view = layoutInflater.inflate(R.layout.list_item, parent, false);
+        }
+
         return new MyViewClass(view);
     }
 
@@ -124,7 +135,10 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
                     .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .into(holder.photoView);
         }else {
-            holder.photoView.setVisibility(View.GONE);
+            if (!isLinear){
+                holder.photoView.setVisibility(View.GONE);
+            }
+
         }
 
         if (tg.length()>0){
@@ -314,12 +328,12 @@ public class MyRecAdapter extends RecyclerView.Adapter<MyRecAdapter.MyViewClass>
         encryptionUtils = new EncryptionUtils();
     }
 
-    private static String delNoDigOrLet (String s) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            if (Character.isLetterOrDigit(s.charAt(i)))
-                sb.append(s.charAt(i));
+        private static String delNoDigOrLet (String s) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < s.length(); i++) {
+                if (Character.isLetterOrDigit(s.charAt(i)))
+                    sb.append(s.charAt(i));
+            }
+            return sb.toString();
         }
-        return sb.toString();
-    }
 }
